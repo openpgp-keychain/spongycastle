@@ -865,6 +865,31 @@ public class PGPPublicKey
     }
 
     /**
+     * Add a subkey binding certification, changing the key type from master to subkey.
+     *
+     * @param key the key the revocation is to be added to.
+     * @param certification the key signature to be added.
+     * @return the new changed public key object.
+     */
+    public static PGPPublicKey addSubkeyBindingCertification(
+            PGPPublicKey    key,
+            PGPSignature    certification)
+    {
+        // make sure no subSigs are previously present
+        if (!key.isMasterKey())
+        {
+            throw new IllegalArgumentException("key is already a subkey!");
+        }
+
+        PGPPublicKey    returnKey = new PGPPublicKey(key);
+
+        returnKey.subSigs = new ArrayList();
+        returnKey.subSigs.add(certification);
+        return returnKey;
+    }
+
+
+    /**
      * Add a revocation or some other key certification to a key.
      * 
      * @param key the key the revocation is to be added to.
