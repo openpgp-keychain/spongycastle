@@ -97,4 +97,7 @@ subprojects {
     test {
         systemProperty 'bc.test.data.home', bcTestDataHome
     }
+
+    // skip tests, this is just a dependency and we're not changing it
+    test.enabled=false
 }
