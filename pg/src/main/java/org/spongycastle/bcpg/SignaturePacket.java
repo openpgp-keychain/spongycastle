@@ -162,6 +162,18 @@ public class SignaturePacket
             signature[0] = ecR;
             signature[1] = ecS;
             break;
+        case EDDSA:
+            {
+                signature = null;
+                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                int ch;
+                while ((ch = in.read()) >= 0)
+                {
+                    bOut.write(ch);
+                }
+                signatureEncoding = bOut.toByteArray();
+            }
+            break;
         default:
             if (keyAlgorithm >= PublicKeyAlgorithmTags.EXPERIMENTAL_1 && keyAlgorithm <= PublicKeyAlgorithmTags.EXPERIMENTAL_11)
             {
