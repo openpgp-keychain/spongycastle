@@ -14,11 +14,13 @@ import org.spongycastle.crypto.params.ECKeyParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
 import org.spongycastle.crypto.params.ParametersWithRandom;
+import org.spongycastle.math.ec.custom.djb.*;
 import org.spongycastle.math.ec.ECAlgorithms;
 import org.spongycastle.math.ec.ECConstants;
 import org.spongycastle.math.ec.ECMultiplier;
 import org.spongycastle.math.ec.ECPoint;
-import org.spongycastle.math.ec.FixedPointCombMultiplier;
+import org.spongycastle.math.ec.ReferenceMultiplier;
+import org.spongycastle.math.raw.Nat256;
 
 public class EDDSASigner
     implements ECConstants, DSA
@@ -29,7 +31,8 @@ public class EDDSASigner
     private SecureRandom    random;
 
     static final int b = 256;
-    static final BigInteger q = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819949");
+    static final BigInteger q = Nat256.toBigInteger(Ed25519Field.P);
+    static final BigInteger qq = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819949");
     static final BigInteger qm2 = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819947");
     static final BigInteger qp3 = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819952");
     static final BigInteger l = new BigInteger("7237005577332262213973186563042994240857116359379907606001950938285454250989");
@@ -156,6 +159,9 @@ public class EDDSASigner
             a = a.add(apart);
         }
         BigInteger[] A = scalarmult(B,a);
+        // ECPoint pe = ec.getCurve().createPoint(Bx, By, true);
+        // ECPoint p = basePointMultiplier.multiply(pe, a);
+        // BigInteger[] A = new BigInteger[]{p.getXCoord().toBigInteger(), p.getYCoord().toBigInteger()};
         return A[1].toByteArray();
     }
 
@@ -204,11 +210,14 @@ public class EDDSASigner
             x = q.subtract(x);
         }
         BigInteger[] P = {x,y};
-        if (!isoncurve(P)) throw new Exception("decoding point that is not on curve");
+        // if (!isoncurve(P)) throw new Exception("decoding point that is not on curve");
         return P;
     }
 
     public BigInteger[] generateSignature(byte[] m) {
+        System.out.println("q:" + q);
+        System.out.println("qq:" + qq);
+        ECDomainParameters ec = key.getParameters();
         BigInteger d = ((ECPrivateKeyParameters)key).getD();
         byte[] sk = d.toByteArray();
         if (sk[0] == 0) {
@@ -224,8 +233,23 @@ public class EDDSASigner
         }
         ByteBuffer rsub = ByteBuffer.allocate((b/8)+m.length);
         rsub.put(h, b/8, b/4-b/8).put(m);
-        BigInteger r = Hint(rsub.array());
-        BigInteger[] R = scalarmult(B,r);
+        BigInteger r = Hint(rsub.array()).mod(q);
+        ECMultiplier basePointMultiplier = createBasePointMultiplier();
+        System.out.println("q:" + q.toString());
+        System.out.println("N:" + ec.getN().toString());
+        System.out.println("before");
+        ECPoint pe = ec.getCurve().createPoint(Bx, By, true);
+        System.out.println("before 0.5");
+        ECPoint p = basePointMultiplier.multiply(pe, r);
+        System.out.println("before 1");
+        System.out.println("r:" + r.toString());
+        // BigInteger[] Ra = scalarmult(B,r);
+        BigInteger[] R = new BigInteger[]{p.getXCoord().toBigInteger(), p.getYCoord().toBigInteger()};
+        System.out.println("before 3");
+        // System.out.println("Ra x:" + Ra[0].toString());
+        // System.out.println("Ra y:" + Ra[1].toString());
+        System.out.println("R x:" + R[0].toString());
+        System.out.println("R y:" + R[1].toString());
         ByteBuffer Stemp = ByteBuffer.allocate(b/4+pk.length+m.length);
         Stemp.put(encodepoint(R)).put(pk).put(m);
         BigInteger S = r.add(Hint(Stemp.array()).multiply(a)).mod(l);
@@ -237,6 +261,7 @@ public class EDDSASigner
         BigInteger  Rb,
         BigInteger  S)
     {
+        ECDomainParameters ec = key.getParameters();
         ECPoint Q = ((ECPublicKeyParameters)key).getQ();
         byte[] pk = Q.getY().toBigInteger().toByteArray();
         BigInteger[] R,A;
@@ -253,11 +278,24 @@ public class EDDSASigner
         ByteBuffer Stemp = ByteBuffer.allocate(b/4+pk.length+m.length);
         Stemp.put(encodepoint(R)).put(pk).put(m);
         BigInteger h = Hint(Stemp.array());
-        BigInteger[] ra = scalarmult(B,S);
-        BigInteger[] rb = edwards(R,scalarmult(A,h));
+        // BigInteger[] ra = scalarmult(B,S);
+        ECPoint pe = ec.getCurve().createPoint(Bx, By, true);
+        ECMultiplier basePointMultiplier = createBasePointMultiplier();
+        ECPoint p = basePointMultiplier.multiply(pe, S);
+        BigInteger[] ra = new BigInteger[]{p.getXCoord().toBigInteger(), p.getYCoord().toBigInteger()};
+        ECPoint pe1 = ec.getCurve().createPoint(A[0], A[1], true);
+        ECPoint p1 = basePointMultiplier.multiply(pe1, h);
+        BigInteger[] As = new BigInteger[]{p1.getXCoord().toBigInteger(), p1.getYCoord().toBigInteger()};
+        BigInteger[] rb = edwards(R,As);
+        // BigInteger[] rb = edwards(R,scalarmult(A,h));
         if (!ra[0].equals(rb[0]) || !ra[1].equals(rb[1])) // Constant time comparison
             return false;
         return true;
+    }
+
+    protected ECMultiplier createBasePointMultiplier()
+    {
+        return new ReferenceMultiplier();
     }
 
     protected SecureRandom initSecureRandom(boolean needed, SecureRandom provided)
