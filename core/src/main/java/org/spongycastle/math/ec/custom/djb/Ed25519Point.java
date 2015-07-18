@@ -157,7 +157,7 @@ public class Ed25519Point extends ECPoint.AbstractFp
             return this;
         }
 
-        return twiceJacobianModified(false).add(this);
+        return this.add(this).add(this);
     }
 
     public ECPoint negate()

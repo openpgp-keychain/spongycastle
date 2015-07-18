@@ -176,10 +176,18 @@ public class ECAlgorithms
             }
             for (int i = 1; i < t; i++)
             {
+                System.out.println("fieldElement:" + p.getXCoord().getFieldName());
+                System.out.println("px:" + p.getXCoord().toBigInteger());
+                System.out.println("py:" + p.getYCoord().toBigInteger());
                 p = p.twice();
+                System.out.println("px: twice:" + p.getXCoord().toBigInteger());
+                System.out.println("py: twice:" + p.getYCoord().toBigInteger());
                 if (x.testBit(i))
                 {
                     q = q.add(p);
+                    System.out.println(i);
+                    System.out.println("qx:" + q.getXCoord().toBigInteger());
+                    System.out.println("qy:" + q.getYCoord().toBigInteger());
                 }
             }
         }
