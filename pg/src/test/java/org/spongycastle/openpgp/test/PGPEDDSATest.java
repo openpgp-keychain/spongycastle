@@ -47,12 +47,15 @@ import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.test.SimpleTest;
 
+import org.spongycastle.bcpg.EDDSAPublicBCPGKey;
+
 public class PGPEDDSATest
     extends SimpleTest
 {
     public void performTest()
         throws Exception
     {
+        System.out.println("PGPEDDSA");
         KeyPairGenerator        keyGen = KeyPairGenerator.getInstance("EDDSA", "SC");
 
         keyGen.initialize(new ECGenParameterSpec("ed25519"));
@@ -66,11 +69,17 @@ public class PGPEDDSATest
         //
         PGPSignatureGenerator signGen = new PGPSignatureGenerator(new JcaPGPContentSignerBuilder(PGPPublicKey.EDDSA, HashAlgorithmTags.SHA256).setProvider("SC"));
 
-        signGen.init(PGPSignature.BINARY_DOCUMENT, ecdsaKeyPair.getPrivateKey());
+        System.out.println("EDDSA:" + ((EDDSAPublicBCPGKey)ecdsaKeyPair.getPublicKey().getPublicKeyPacket().getKey()).getPoint().getXCoord().getFieldName());
+
+        signGen.init(PGPSignature.BINARY_DOCUMENT, ecdsaKeyPair.getPrivateKey(), 0);
+
+        System.out.println("EDDSA priv:" + ((EDDSAPublicBCPGKey)ecdsaKeyPair.getPrivateKey().getPublicKeyPacket().getKey()).getPoint().getXCoord().getFieldName());
 
         signGen.update("hello world!".getBytes());
 
-        PGPSignature sig = signGen.generate();
+        System.out.println("before generate");
+        PGPSignature sig = signGen.generate(0);
+        System.out.println("after generate");
 
         sig.init(new JcaPGPContentVerifierBuilderProvider().setProvider("SC"), ecdsaKeyPair.getPublicKey());
 

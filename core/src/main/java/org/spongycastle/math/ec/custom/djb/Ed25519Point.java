@@ -70,27 +70,18 @@ public class Ed25519Point extends ECPoint.AbstractFp
         Ed25519FieldElement X1 = (Ed25519FieldElement)this.x, Y1 = (Ed25519FieldElement)this.y;
         Ed25519FieldElement X2 = (Ed25519FieldElement)b.getXCoord(), Y2 = (Ed25519FieldElement)b.getYCoord();
 
-        System.out.println("X1:" + X1.toBigInteger());
-        System.out.println("Y1:" + Y1.toBigInteger());
-        System.out.println("X2:" + X2.toBigInteger());
-        System.out.println("Y2:" + Y2.toBigInteger());
 
         int[] t1 = Nat256.create();
         int[] t2 = Nat256.create();
         int[] t3 = Nat256.create();
         int[] one = Nat256.fromBigInteger(BigInteger.ONE);
 
-        System.out.println("t1: init:" + Nat256.toBigInteger(t1));
-        System.out.println("t2: init:" + Nat256.toBigInteger(t2));
-        System.out.println("t3: init:" + Nat256.toBigInteger(t3));
 
         int[] dtemp = Ed25519Field.d.clone();
-        System.out.println("dtemp: before:" + Nat256.toBigInteger(dtemp));
         Ed25519Field.multiply(dtemp, X1.x, dtemp);
         Ed25519Field.multiply(dtemp, X2.x, dtemp);
         Ed25519Field.multiply(dtemp, Y1.x, dtemp);
         Ed25519Field.multiply(dtemp, Y2.x, dtemp);
-        System.out.println("dtemp:" + Nat256.toBigInteger(dtemp));
 
         int[] x3 = Nat256.create();
         Ed25519Field.multiply(X1.x, Y2.x, t1);
@@ -100,9 +91,6 @@ public class Ed25519Point extends ECPoint.AbstractFp
         Ed25519Field.add(t1, t2, x3);
         Ed25519Field.multiply(x3, t3, x3);
 
-        System.out.println("t1: x3:" + Nat256.toBigInteger(t1));
-        System.out.println("t2: x3:" + Nat256.toBigInteger(t2));
-        System.out.println("t3: x3:" + Nat256.toBigInteger(t3));
 
         int[] y3 = Nat256.create();
         Ed25519Field.multiply(Y1.x, Y2.x, t1);
@@ -112,9 +100,6 @@ public class Ed25519Point extends ECPoint.AbstractFp
         Ed25519Field.add(t1, t2, y3);
         Ed25519Field.multiply(y3, t3, y3);
 
-        System.out.println("t1: y3:" + Nat256.toBigInteger(t1));
-        System.out.println("t2: y3:" + Nat256.toBigInteger(t2));
-        System.out.println("t3: y3:" + Nat256.toBigInteger(t3));
 
         Ed25519FieldElement X3 = new Ed25519FieldElement(x3);
         Ed25519FieldElement Y3 = new Ed25519FieldElement(y3);

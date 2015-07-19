@@ -64,6 +64,7 @@ public class KeyFactorySpi
     public PrivateKey generatePrivate(PrivateKeyInfo keyInfo)
         throws IOException
     {
+        System.out.println("DSA generatePrivate");
         ASN1ObjectIdentifier algOid = keyInfo.getPrivateKeyAlgorithm().getAlgorithm();
 
         if (DSAUtil.isDsaOid(algOid))

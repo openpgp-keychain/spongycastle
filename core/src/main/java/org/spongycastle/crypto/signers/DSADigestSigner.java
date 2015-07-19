@@ -35,6 +35,16 @@ public class DSADigestSigner
         boolean           forSigning,
         CipherParameters   parameters)
     {
+        System.out.println("DSADigestSigner.init");
+      StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+        StringBuilder sb = new StringBuilder();
+        sb.append(ste.getMethodName())        // メソッド名取得
+            .append("(")
+            .append(ste.getFileName())        // ファイル名取得
+            .append(":")
+            .append(ste.getLineNumber())    // 行番号取得
+            .append(")");
+        System.out.println(sb.toString());
         this.forSigning = forSigning;
 
         AsymmetricKeyParameter k;

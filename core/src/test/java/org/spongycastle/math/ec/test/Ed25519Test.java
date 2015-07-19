@@ -24,7 +24,7 @@ public class Ed25519Test extends TestCase
     public void testOperations()
     {
         ECCurve curve = new Ed25519();
-        ECPoint b = curve.createPoint(Bx, By, true);
+        ECPoint b = curve.createPoint(Bx.mod(q), By.mod(q), true);
         ECPoint c = b.twice();
         ECPoint ca = b.add(b);
         ECPoint cc = b.twice();
@@ -34,23 +34,13 @@ public class Ed25519Test extends TestCase
         assertEquals("x is different", c.getXCoord().toBigInteger(), BB[0]);
         assertEquals("y is different", c.getYCoord().toBigInteger(), BB[1]);
 
-        BigInteger r = BigInteger.valueOf(2);
-
+        BigInteger r = new BigInteger("50040867058161480862202409054900618787955214541566863997768081724649338203857");
+        System.out.println("b[x]:" + b.getXCoord().toBigInteger().toString());
+        System.out.println("b[y]:" + b.getYCoord().toBigInteger().toString());
         ECMultiplier basePointMultiplier = new ReferenceMultiplier();
         ECPoint p = basePointMultiplier.multiply(b, r);
 
         BigInteger[] Ra = scalarmult(B, r);
-
-        System.out.println("b[x]:" + b.getXCoord().toBigInteger().toString());
-        System.out.println("b[y]:" + b.getYCoord().toBigInteger().toString());
-        System.out.println("c[x]:" + c.getXCoord().toBigInteger().toString());
-        System.out.println("c[y]:" + c.getYCoord().toBigInteger().toString());
-        System.out.println("ca[x]:" + ca.getXCoord().toBigInteger().toString());
-        System.out.println("ca[y]:" + ca.getYCoord().toBigInteger().toString());
-        System.out.println("cc[x]:" + cc.getXCoord().toBigInteger().toString());
-        System.out.println("cc[y]:" + cc.getYCoord().toBigInteger().toString());
-        System.out.println("cca[x]:" + cca.getXCoord().toBigInteger().toString());
-        System.out.println("cca[y]:" + cca.getYCoord().toBigInteger().toString());
 
         assertEquals("x is different in mult", p.getXCoord().toBigInteger(), Ra[0]);
         assertEquals("y is different in mult", p.getYCoord().toBigInteger(), Ra[1]);
@@ -75,9 +65,9 @@ public class Ed25519Test extends TestCase
         BigInteger[] Q = scalarmult(P, e.divide(BigInteger.valueOf(2)));
         Q = edwards(Q, Q);
         if (e.testBit(0)) Q = edwards(Q, P);
-        System.out.println("e:" + e.toString());
-        System.out.println("x:" + Q[0].toString());
-        System.out.println("y:" + Q[1].toString());
+        // System.out.println("e:" + e.toString());
+        // System.out.println("x:" + Q[0].toString());
+        // System.out.println("y:" + Q[1].toString());
         return Q;
     }
 

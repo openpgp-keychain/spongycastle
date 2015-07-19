@@ -132,8 +132,9 @@ public class JcaPGPKeyConverter
                 return fact.generatePublic(ecDsaSpec);
             case PublicKeyAlgorithmTags.EDDSA:
                 EDDSAPublicBCPGKey eddsaK = (EDDSAPublicBCPGKey)publicPk.getKey();
+                System.out.println("KeyGen:" + eddsaK.getPoint().getXCoord().getFieldName());
                 ECPublicKeySpec edDsaSpec = new ECPublicKeySpec(
-                    new java.security.spec.ECPoint(eddsaK.getPoint().getAffineXCoord().toBigInteger(), eddsaK.getPoint().getAffineYCoord().toBigInteger()),
+                    new java.security.spec.ECPoint(eddsaK.getPoint().getXCoord().toBigInteger(), eddsaK.getPoint().getYCoord().toBigInteger()),
                     getX9Parameters(eddsaK.getCurveOID()));
                 fact = helper.createKeyFactory("EDDSA");
 
@@ -315,12 +316,22 @@ public class JcaPGPKeyConverter
 
                 return fact.generatePrivate(ecDsaSpec);
             case PublicKeyAlgorithmTags.EDDSA:
+                System.out.println("getPrivateKey:EDDSA");
                 EDDSAPublicBCPGKey eddsaPub = (EDDSAPublicBCPGKey)pubPk.getKey();
                 ECSecretBCPGKey eddsaK = (ECSecretBCPGKey)privPk;
                 ECPrivateKeySpec edDsaSpec = new ECPrivateKeySpec(
                                                     eddsaK.getX(),
                                                     getX9Parameters(eddsaPub.getCurveOID()));
                 fact = helper.createKeyFactory("EDDSA");
+                System.out.println(fact);
+            //     PrivateKey key = fact.generatePrivate(edDsaSpec).copy();
+            //     System.out.println(key);
+            //     if (key instanceof ECPrivateKey)
+            //     {
+            // ECPrivateKey  k = (ECPrivateKey)key;
+            // ECParameterSpec s = k.getParameters();
+            //         System.out.println("EDDSAJcaggLLL:" + s.getCurve().getA().getFieldName());
+            //     }
 
                 return fact.generatePrivate(edDsaSpec);
             case PGPPublicKey.ELGAMAL_ENCRYPT:
@@ -395,12 +406,14 @@ public class JcaPGPKeyConverter
 
     private ECParameterSpec getX9Parameters(ASN1ObjectIdentifier curveOid)
     {
+        System.out.println("getX9Parameters:" + curveOid.getId());
         X9ECParameters x9 = CustomNamedCurves.getByOID(curveOid);
         if (x9 == null)
         {
             x9 = ECNamedCurveTable.getByOID(curveOid);
         }
-
+        System.out.println("getX9Parameters: curve:" + x9.getCurve().getA().getFieldName());
+        System.out.println("getX9Parameters: point:" + x9.getG().getXCoord().getFieldName());
         return new ECNamedCurveSpec(curveOid.getId(), x9.getCurve(), x9.getG(), x9.getN(),
             x9.getH(), x9.getSeed());
     }

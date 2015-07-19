@@ -165,29 +165,26 @@ public class ECAlgorithms
      */
     public static ECPoint referenceMultiply(ECPoint p, BigInteger k)
     {
+        // System.out.println("referenceMultiply");
         BigInteger x = k.abs();
         ECPoint q = p.getCurve().getInfinity();
         int t = x.bitLength();
+        // System.out.println("p[x]:" + p.getXCoord().toBigInteger().toString());
         if (t > 0)
         {
+            ECPoint pp = p.twice();
+            // System.out.println("p[x]:" + pp.getXCoord().toBigInteger().toString());
+            // System.out.println("p[y]:" + pp.getYCoord().toBigInteger().toString());
             if (x.testBit(0))
             {
                 q = p;
             }
             for (int i = 1; i < t; i++)
             {
-                System.out.println("fieldElement:" + p.getXCoord().getFieldName());
-                System.out.println("px:" + p.getXCoord().toBigInteger());
-                System.out.println("py:" + p.getYCoord().toBigInteger());
                 p = p.twice();
-                System.out.println("px: twice:" + p.getXCoord().toBigInteger());
-                System.out.println("py: twice:" + p.getYCoord().toBigInteger());
                 if (x.testBit(i))
                 {
                     q = q.add(p);
-                    System.out.println(i);
-                    System.out.println("qx:" + q.getXCoord().toBigInteger());
-                    System.out.println("qy:" + q.getYCoord().toBigInteger());
                 }
             }
         }

@@ -18,6 +18,9 @@ import org.spongycastle.openpgp.operator.PGPContentSignerBuilder;
 import org.spongycastle.openpgp.operator.PGPDigestCalculator;
 import org.spongycastle.util.io.TeeOutputStream;
 
+import org.spongycastle.jce.interfaces.ECPrivateKey;
+import org.spongycastle.jce.spec.ECParameterSpec;
+
 public class JcaPGPContentSignerBuilder
     implements PGPContentSignerBuilder
 {
@@ -78,10 +81,20 @@ public class JcaPGPContentSignerBuilder
     {
         if (privateKey instanceof JcaPGPPrivateKey)
         {
+            System.out.println("JcaPGPPrivateKey");
             return build(signatureType, privateKey.getKeyID(), ((JcaPGPPrivateKey)privateKey).getPrivateKey());
         }
         else
         {
+            System.out.println("JcaPGPPrivateKey key conv");
+            System.out.println(privateKey);
+            System.out.println(privateKey.getPublicKeyPacket().getKey());
+            PrivateKey key = keyConverter.getPrivateKey(privateKey);
+            if (key instanceof ECPrivateKey) {
+                ECPrivateKey  k = (ECPrivateKey)key;
+                ECParameterSpec s = k.getParameters();
+                System.out.println("ggLass:" + s.getCurve().getA().getFieldName());
+            }
             return build(signatureType, privateKey.getKeyID(), keyConverter.getPrivateKey(privateKey));
         }
     }
@@ -96,10 +109,20 @@ public class JcaPGPContentSignerBuilder
         {
             if (random != null)
             {
+                System.out.println("with random");
                 signature.initSign(privateKey, random);
             }
             else
             {
+                if (privateKey instanceof ECPrivateKey)
+                {
+                    ECPrivateKey  k = (ECPrivateKey)privateKey;
+                    ECParameterSpec s = k.getParameters();
+                    System.out.println("JcaggL:" + s.getCurve().getA().getFieldName());
+                }
+                System.out.println("without random");
+                System.out.println(privateKey);
+                System.out.println(signature);
                 signature.initSign(privateKey);
             }
         }
@@ -136,6 +159,18 @@ public class JcaPGPContentSignerBuilder
             }
 
             public byte[] getSignature()
+            {
+                try
+                {
+                    return signature.sign();
+                }
+                catch (SignatureException e)
+                {    // TODO: need a specific runtime exception for PGP operators.
+                    throw new IllegalStateException("unable to create signature");
+                }
+            }
+
+            public byte[] getSignature(int ii)
             {
                 try
                 {

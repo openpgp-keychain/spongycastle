@@ -52,6 +52,16 @@ public class SignatureSpi
         PrivateKey privateKey)
         throws InvalidKeyException
     {
+        System.out.println(privateKey);
+      StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+        StringBuilder sb = new StringBuilder();
+        sb.append(ste.getMethodName())        // メソッド名取得
+            .append("(")
+            .append(ste.getFileName())        // ファイル名取得
+            .append(":")
+            .append(ste.getLineNumber())    // 行番号取得
+            .append(")");
+        System.out.println(sb.toString());
         CipherParameters param = ECUtil.generatePrivateKeyParameter(privateKey);
 
         digest.reset();

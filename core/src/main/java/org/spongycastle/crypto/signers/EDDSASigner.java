@@ -65,6 +65,16 @@ public class EDDSASigner
         boolean                 forSigning,
         CipherParameters        param)
     {
+        // StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+        // StringBuilder sb = new StringBuilder();
+        // sb.append(ste.getMethodName())        // メソッド名取得
+        //     .append("(")
+        //     .append(ste.getFileName())        // ファイル名取得
+        //     .append(":")
+        //     .append(ste.getLineNumber())    // 行番号取得
+        //     .append(")");
+        // System.out.println(sb.toString());
+
         SecureRandom providedRandom = null;
 
         if (forSigning)
@@ -235,17 +245,16 @@ public class EDDSASigner
         rsub.put(h, b/8, b/4-b/8).put(m);
         BigInteger r = Hint(rsub.array()).mod(q);
         ECMultiplier basePointMultiplier = createBasePointMultiplier();
-        System.out.println("q:" + q.toString());
-        System.out.println("N:" + ec.getN().toString());
-        System.out.println("before");
         ECPoint pe = ec.getCurve().createPoint(Bx.mod(q), By.mod(q), true);
-        System.out.println("before 0.5");
+        System.out.println("pe[x]:" + pe.getXCoord().getFieldName());
+        System.out.println("pe[x]:" + pe.getXCoord().toBigInteger().toString());
+        System.out.println("pe[y]:" + pe.getYCoord().toBigInteger().toString());
+        System.out.println("rrr:" + r.toString());
         ECPoint p = basePointMultiplier.multiply(pe, r);
-        System.out.println("before 1");
-        System.out.println("r:" + r.toString());
+        System.out.println("rr:" + r.toString());
         BigInteger[] Ra = scalarmult(B,r);
         BigInteger[] R = new BigInteger[]{p.getXCoord().toBigInteger(), p.getYCoord().toBigInteger()};
-        System.out.println("before 3");
+        System.out.println("r:" + r.toString());
         System.out.println("Ra x:" + Ra[0].toString());
         System.out.println("Ra y:" + Ra[1].toString());
         System.out.println("R x:" + R[0].toString());
