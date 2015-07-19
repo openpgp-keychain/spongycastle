@@ -22,38 +22,43 @@ public class ECNamedCurveSpec
         ECCurve  curve,
         byte[]   seed)
     {
+        System.out.println("convertCurve");
         if (ECAlgorithms.isFpCurve(curve))
         {
+            System.out.println("c1");
             return new EllipticCurve(new ECFieldFp(curve.getField().getCharacteristic()), curve.getA().toBigInteger(), curve.getB().toBigInteger(), seed);
         }
         else
         {
+            System.out.println("c2");
             ECCurve.F2m curveF2m = (ECCurve.F2m)curve;
             int ks[];
-            
+
             if (curveF2m.isTrinomial())
             {
+                System.out.println("c3");
                 ks = new int[] { curveF2m.getK1() };
-                
+
                 return new EllipticCurve(new ECFieldF2m(curveF2m.getM(), ks), curve.getA().toBigInteger(), curve.getB().toBigInteger(), seed);
             }
             else
             {
+                System.out.println("c4");
                 ks = new int[] { curveF2m.getK3(), curveF2m.getK2(), curveF2m.getK1() };
 
                 return new EllipticCurve(new ECFieldF2m(curveF2m.getM(), ks), curve.getA().toBigInteger(), curve.getB().toBigInteger(), seed);
-            } 
+            }
         }
 
     }
-    
+
     private static ECPoint convertPoint(
         org.spongycastle.math.ec.ECPoint  g)
     {
         g = g.normalize();
         return new ECPoint(g.getAffineXCoord().toBigInteger(), g.getAffineYCoord().toBigInteger());
     }
-    
+
     public ECNamedCurveSpec(
         String                              name,
         ECCurve                             curve,
@@ -61,7 +66,7 @@ public class ECNamedCurveSpec
         BigInteger                          n)
     {
         super(convertCurve(curve, null), convertPoint(g), n, 1);
-
+        System.out.println("a1");
         this.name = name;
     }
 
@@ -72,10 +77,10 @@ public class ECNamedCurveSpec
         BigInteger      n)
     {
         super(curve, g, n, 1);
-
+        System.out.println("a2");
         this.name = name;
     }
-    
+
     public ECNamedCurveSpec(
         String                              name,
         ECCurve                             curve,
@@ -84,7 +89,7 @@ public class ECNamedCurveSpec
         BigInteger                          h)
     {
         super(convertCurve(curve, null), convertPoint(g), n, h.intValue());
-
+        System.out.println("a3");
         this.name = name;
     }
 
@@ -96,10 +101,10 @@ public class ECNamedCurveSpec
         BigInteger      h)
     {
         super(curve, g, n, h.intValue());
-
+        System.out.println("a4");
         this.name = name;
     }
-    
+
     public ECNamedCurveSpec(
         String                              name,
         ECCurve                             curve,
@@ -109,7 +114,8 @@ public class ECNamedCurveSpec
         byte[]                              seed)
     {
         super(convertCurve(curve, seed), convertPoint(g), n, h.intValue());
-        
+        System.out.println("a5");
+        System.out.println("name:" + name);
         this.name = name;
     }
 

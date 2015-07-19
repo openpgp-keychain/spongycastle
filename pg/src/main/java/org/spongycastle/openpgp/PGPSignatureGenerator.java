@@ -66,7 +66,33 @@ public class PGPSignatureGenerator
             throw new PGPException("key algorithm mismatch");
         }
     }
-    
+
+    /**
+     * Initialise the generator for signing.
+     *
+     * @param signatureType
+     * @param key
+     * @throws PGPException
+     */
+    public void init(
+        int             signatureType,
+        PGPPrivateKey   key,
+        int ii)
+        throws PGPException
+    {
+        // System.out.println("PGPSignatureGEnation.init");
+        contentSigner = contentSignerBuilder.build(signatureType, key);
+        sigOut = contentSigner.getOutputStream();
+        sigType = contentSigner.getType();
+        lastb = 0;
+        System.out.println("PGPSignatureGEnation.init");
+
+        if (providedKeyAlgorithm >= 0 && providedKeyAlgorithm != contentSigner.getKeyAlgorithm())
+        {
+            throw new PGPException("key algorithm mismatch");
+        }
+    }
+
     public void update(
         byte    b)
     {
@@ -89,7 +115,7 @@ public class PGPSignatureGenerator
             {
                 byteUpdate(b);
             }
-            
+
             lastb = b;
         }
         else
@@ -97,13 +123,13 @@ public class PGPSignatureGenerator
             byteUpdate(b);
         }
     }
-    
+
     public void update(
         byte[]    b)
     {
         this.update(b, 0, b.length);
     }
-    
+
     public void update(
         byte[]  b,
         int     off,
@@ -112,7 +138,7 @@ public class PGPSignatureGenerator
         if (sigType == PGPSignature.CANONICAL_TEXT_DOCUMENT)
         {
             int finish = off + len;
-            
+
             for (int i = off; i != finish; i++)
             {
                 this.update(b[i]);
@@ -156,10 +182,10 @@ public class PGPSignatureGenerator
             hashed = new SignatureSubpacket[0];
             return;
         }
-        
+
         hashed = hashedPcks.toSubpacketArray();
     }
-    
+
     public void setUnhashedSubpackets(
         PGPSignatureSubpacketVector    unhashedPcks)
     {
@@ -171,10 +197,10 @@ public class PGPSignatureGenerator
 
         unhashed = unhashedPcks.toSubpacketArray();
     }
-    
+
     /**
      * Return the one pass header associated with the current signature.
-     * 
+     *
      * @param isNested
      * @return PGPOnePassSignature
      * @throws PGPException
@@ -185,10 +211,10 @@ public class PGPSignatureGenerator
     {
         return new PGPOnePassSignature(new OnePassSignaturePacket(sigType, contentSigner.getHashAlgorithm(), contentSigner.getKeyAlgorithm(), contentSigner.getKeyID(), isNested));
     }
-    
+
     /**
      * Return a signature object containing the current signature state.
-     * 
+     *
      * @return PGPSignature
      * @throws PGPException
      */
@@ -208,7 +234,7 @@ public class PGPSignatureGenerator
         {
             hPkts = hashed;
         }
-        
+
         if (!packetPresent(hashed, SignatureSubpacketTags.ISSUER_KEY_ID) && !packetPresent(unhashed, SignatureSubpacketTags.ISSUER_KEY_ID))
         {
             unhPkts = insertSubpacket(unhashed, new IssuerKeyID(false, contentSigner.getKeyID()));
@@ -217,23 +243,23 @@ public class PGPSignatureGenerator
         {
             unhPkts = unhashed;
         }
-        
+
         try
         {
             sOut.write((byte)version);
             sOut.write((byte)sigType);
             sOut.write((byte)contentSigner.getKeyAlgorithm());
             sOut.write((byte)contentSigner.getHashAlgorithm());
-            
+
             ByteArrayOutputStream    hOut = new ByteArrayOutputStream();
-            
+
             for (int i = 0; i != hPkts.length; i++)
             {
                 hPkts[i].encode(hOut);
             }
-                
+
             byte[]                            data = hOut.toByteArray();
-    
+
             sOut.write((byte)(data.length >> 8));
             sOut.write((byte)data.length);
             sOut.write(data);
@@ -242,16 +268,16 @@ public class PGPSignatureGenerator
         {
             throw new PGPException("exception encoding hashed data.", e);
         }
-        
+
         byte[]    hData = sOut.toByteArray();
-        
+
         sOut.write((byte)version);
         sOut.write((byte)0xff);
         sOut.write((byte)(hData.length >> 24));
         sOut.write((byte)(hData.length >> 16));
         sOut.write((byte)(hData.length >> 8));
         sOut.write((byte)(hData.length));
-        
+
         byte[]    trailer = sOut.toByteArray();
 
         blockUpdate(trailer, 0, trailer.length);
@@ -263,22 +289,110 @@ public class PGPSignatureGenerator
             sigValues[0] = new MPInteger(new BigInteger(1, contentSigner.getSignature()));
         }
         else
-        {   
+        {
             sigValues = PGPUtil.dsaSigToMpi(contentSigner.getSignature());
         }
-        
+
         byte[]                        digest = contentSigner.getDigest();
         byte[]                        fingerPrint = new byte[2];
 
         fingerPrint[0] = digest[0];
         fingerPrint[1] = digest[1];
-        
+
+        return new PGPSignature(new SignaturePacket(sigType, contentSigner.getKeyID(), contentSigner.getKeyAlgorithm(), contentSigner.getHashAlgorithm(), hPkts, unhPkts, fingerPrint, sigValues));
+    }
+
+    public PGPSignature generate(int ii)
+        throws PGPException
+    {
+        System.out.println("generate");
+        MPInteger[]             sigValues;
+        int                     version = 4;
+        ByteArrayOutputStream   sOut = new ByteArrayOutputStream();
+        SignatureSubpacket[]    hPkts, unhPkts;
+
+        if (!packetPresent(hashed, SignatureSubpacketTags.CREATION_TIME))
+        {
+            hPkts = insertSubpacket(hashed, new SignatureCreationTime(false, new Date()));
+        }
+        else
+        {
+            hPkts = hashed;
+        }
+
+        System.out.println("generate 0");
+
+        if (!packetPresent(hashed, SignatureSubpacketTags.ISSUER_KEY_ID) && !packetPresent(unhashed, SignatureSubpacketTags.ISSUER_KEY_ID))
+        {
+            unhPkts = insertSubpacket(unhashed, new IssuerKeyID(false, contentSigner.getKeyID()));
+        }
+        else
+        {
+            unhPkts = unhashed;
+        }
+
+        try
+        {
+            sOut.write((byte)version);
+            sOut.write((byte)sigType);
+            sOut.write((byte)contentSigner.getKeyAlgorithm());
+            sOut.write((byte)contentSigner.getHashAlgorithm());
+
+            ByteArrayOutputStream    hOut = new ByteArrayOutputStream();
+
+            for (int i = 0; i != hPkts.length; i++)
+            {
+                hPkts[i].encode(hOut);
+            }
+
+            byte[]                            data = hOut.toByteArray();
+
+            sOut.write((byte)(data.length >> 8));
+            sOut.write((byte)data.length);
+            sOut.write(data);
+        }
+        catch (IOException e)
+        {
+            throw new PGPException("exception encoding hashed data.", e);
+        }
+
+        byte[]    hData = sOut.toByteArray();
+
+        sOut.write((byte)version);
+        sOut.write((byte)0xff);
+        sOut.write((byte)(hData.length >> 24));
+        sOut.write((byte)(hData.length >> 16));
+        sOut.write((byte)(hData.length >> 8));
+        sOut.write((byte)(hData.length));
+
+        byte[]    trailer = sOut.toByteArray();
+
+        blockUpdate(trailer, 0, trailer.length);
+
+        if (contentSigner.getKeyAlgorithm() == PublicKeyAlgorithmTags.RSA_SIGN
+            || contentSigner.getKeyAlgorithm() == PublicKeyAlgorithmTags.RSA_GENERAL)    // an RSA signature
+        {
+            sigValues = new MPInteger[1];
+            sigValues[0] = new MPInteger(new BigInteger(1, contentSigner.getSignature()));
+        }
+        else
+        {
+            System.out.println("generate 1");
+            sigValues = PGPUtil.dsaSigToMpi(contentSigner.getSignature());
+        }
+
+        byte[]                        digest = contentSigner.getDigest();
+        byte[]                        fingerPrint = new byte[2];
+
+        fingerPrint[0] = digest[0];
+        fingerPrint[1] = digest[1];
+
         return new PGPSignature(new SignaturePacket(sigType, contentSigner.getKeyID(), contentSigner.getKeyAlgorithm(), contentSigner.getHashAlgorithm(), hPkts, unhPkts, fingerPrint, sigValues));
     }
 
     /**
      * Generate a certification for the passed in id and key.
-     * 
+     *
      * @param id the id we are certifying against the public key.
      * @param pubKey the key we are certifying against the id.
      * @return the certification.
@@ -286,7 +400,7 @@ public class PGPSignatureGenerator
      */
     public PGPSignature generateCertification(
         String          id,
-        PGPPublicKey    pubKey) 
+        PGPPublicKey    pubKey)
         throws PGPException
     {
         updateWithPublicKey(pubKey);
@@ -337,7 +451,7 @@ public class PGPSignatureGenerator
     /**
      * Generate a certification for the passed in key against the passed in
      * master key.
-     * 
+     *
      * @param masterKey the key we are certifying against.
      * @param pubKey the key we are certifying.
      * @return the certification.
@@ -345,18 +459,18 @@ public class PGPSignatureGenerator
      */
     public PGPSignature generateCertification(
         PGPPublicKey    masterKey,
-        PGPPublicKey    pubKey) 
+        PGPPublicKey    pubKey)
         throws PGPException
     {
         updateWithPublicKey(masterKey);
         updateWithPublicKey(pubKey);
-        
+
         return this.generate();
     }
-    
+
     /**
      * Generate a certification, such as a revocation, for the passed in key.
-     * 
+     *
      * @param pubKey the key we are certifying.
      * @return the certification.
      * @throws PGPException
@@ -374,13 +488,13 @@ public class PGPSignatureGenerator
 
         return this.generate();
     }
-    
+
     private byte[] getEncodedPublicKey(
-        PGPPublicKey pubKey) 
+        PGPPublicKey pubKey)
         throws PGPException
     {
         byte[]    keyBytes;
-        
+
         try
         {
             keyBytes = pubKey.publicPk.getEncodedContents();
@@ -389,7 +503,7 @@ public class PGPSignatureGenerator
         {
             throw new PGPException("exception preparing key.", e);
         }
-        
+
         return keyBytes;
     }
 

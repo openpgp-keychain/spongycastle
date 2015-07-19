@@ -89,6 +89,7 @@ public class DSASigner
         SecureRandom    random)
         throws InvalidKeyException
     {
+        System.out.println("engineInitSign 1");
         this.random = random;
         engineInitSign(privateKey);
     }
@@ -97,6 +98,7 @@ public class DSASigner
         PrivateKey  privateKey)
         throws InvalidKeyException
     {
+        System.out.println("engineInitSign 2");
         CipherParameters    param;
 
         param = DSAUtil.generatePrivateKeyParameter(privateKey);
@@ -120,7 +122,7 @@ public class DSASigner
     protected void engineUpdate(
         byte[]  b,
         int     off,
-        int     len) 
+        int     len)
         throws SignatureException
     {
         digest.update(b, off, len);
@@ -146,7 +148,7 @@ public class DSASigner
     }
 
     protected boolean engineVerify(
-        byte[]  sigBytes) 
+        byte[]  sigBytes)
         throws SignatureException
     {
         byte[]  hash = new byte[digest.getDigestSize()];

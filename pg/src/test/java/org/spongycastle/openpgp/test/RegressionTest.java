@@ -8,6 +8,7 @@ import org.spongycastle.util.test.TestResult;
 public class RegressionTest
 {
     public static Test[]    tests = {
+        new PGPParsingTest(),
         new BcPGPKeyRingTest(),
         new PGPKeyRingTest(),
         new BcPGPRSATest(),
@@ -26,9 +27,9 @@ public class RegressionTest
         new PGPCompressionTest(),
         new PGPNoPrivateKeyTest(),
         new PGPECDSATest(),
+        new PGPEDDSATest(),
         new PGPECDHTest(),
-        new PGPECMessageTest(),
-        new PGPParsingTest()
+        new PGPECMessageTest()
     };
 
     public static void main(

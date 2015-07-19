@@ -30,6 +30,7 @@ class BouncyCastleProviderConfiguration
 
     void setParameter(String parameterName, Object parameter)
     {
+        System.out.println(parameterName);
         SecurityManager securityManager = System.getSecurityManager();
 
         if (parameterName.equals(ConfigurableProvider.THREAD_LOCAL_EC_IMPLICITLY_CA))

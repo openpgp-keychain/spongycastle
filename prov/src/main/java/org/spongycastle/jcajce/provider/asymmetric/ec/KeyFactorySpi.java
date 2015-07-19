@@ -85,7 +85,7 @@ public class KeyFactorySpi
            {
                ECParameterSpec implicitSpec = BouncyCastleProvider.CONFIGURATION.getEcImplicitlyCa();
 
-               return new java.security.spec.ECPrivateKeySpec(k.getS(), EC5Util.convertSpec(EC5Util.convertCurve(implicitSpec.getCurve(), implicitSpec.getSeed()), implicitSpec)); 
+               return new java.security.spec.ECPrivateKeySpec(k.getS(), EC5Util.convertSpec(EC5Util.convertCurve(implicitSpec.getCurve(), implicitSpec.getSeed()), implicitSpec));
            }
        }
        else if (spec.isAssignableFrom(org.spongycastle.jce.spec.ECPublicKeySpec.class) && key instanceof ECPublicKey)
@@ -156,10 +156,13 @@ public class KeyFactorySpi
     public PrivateKey generatePrivate(PrivateKeyInfo keyInfo)
         throws IOException
     {
+        System.out.println("generatePrivate:" + keyInfo);
         ASN1ObjectIdentifier algOid = keyInfo.getPrivateKeyAlgorithm().getAlgorithm();
+        System.out.println("algOid:" + algOid);
 
         if (algOid.equals(X9ObjectIdentifiers.id_ecPublicKey))
         {
+            System.out.println("algorithm:" + algorithm);
             return new BCECPrivateKey(algorithm, keyInfo, configuration);
         }
         else
@@ -198,6 +201,15 @@ public class KeyFactorySpi
         public ECDSA()
         {
             super("ECDSA", BouncyCastleProvider.CONFIGURATION);
+        }
+    }
+
+    public static class EDDSA
+        extends KeyFactorySpi
+    {
+        public EDDSA()
+        {
+            super("EDDSA", BouncyCastleProvider.CONFIGURATION);
         }
     }
 

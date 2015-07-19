@@ -24,6 +24,7 @@ import org.spongycastle.crypto.digests.SHA384Digest;
 import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.params.ParametersWithRandom;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.EDDSASigner;
 import org.spongycastle.crypto.signers.ECNRSigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.jcajce.provider.asymmetric.util.DSABase;
@@ -51,6 +52,16 @@ public class SignatureSpi
         PrivateKey privateKey)
         throws InvalidKeyException
     {
+        System.out.println(privateKey);
+      StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+        StringBuilder sb = new StringBuilder();
+        sb.append(ste.getMethodName())        // メソッド名取得
+            .append("(")
+            .append(ste.getFileName())        // ファイル名取得
+            .append(":")
+            .append(ste.getLineNumber())    // 行番号取得
+            .append(")");
+        System.out.println(sb.toString());
         CipherParameters param = ECUtil.generatePrivateKeyParameter(privateKey);
 
         digest.reset();
@@ -272,7 +283,55 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA256
+        extends SignatureSpi
+    {
+        public edDSA256()
+        {
+            super(new SHA256Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
+    static public class edDSA
+        extends SignatureSpi
+    {
+        public edDSA()
+        {
+            super(new SHA1Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     private static class StdDSAEncoder
+        implements DSAEncoder
+    {
+        public byte[] encode(
+            BigInteger r,
+            BigInteger s)
+            throws IOException
+        {
+            ASN1EncodableVector v = new ASN1EncodableVector();
+
+            v.add(new ASN1Integer(r));
+            v.add(new ASN1Integer(s));
+
+            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
+        }
+
+        public BigInteger[] decode(
+            byte[] encoding)
+            throws IOException
+        {
+            ASN1Sequence s = (ASN1Sequence)ASN1Primitive.fromByteArray(encoding);
+            BigInteger[] sig = new BigInteger[2];
+
+            sig[0] = ASN1Integer.getInstance(s.getObjectAt(0)).getValue();
+            sig[1] = ASN1Integer.getInstance(s.getObjectAt(1)).getValue();
+
+            return sig;
+        }
+    }
+
+    private static class StdEDDSAEncoder
         implements DSAEncoder
     {
         public byte[] encode(
