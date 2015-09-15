@@ -31,153 +31,163 @@ public class SignaturePacket
         BCPGInputStream    in)
         throws IOException
     {
-        version = in.read();
-        
-        if (version == 3 || version == 2)
+        try
         {
-            int    l = in.read();
-            
-            signatureType = in.read();
-            creationTime = (((long)in.read() << 24) | (in.read() << 16) | (in.read() << 8) | in.read()) * 1000;
-            keyID |= (long)in.read() << 56;
-            keyID |= (long)in.read() << 48;
-            keyID |= (long)in.read() << 40;
-            keyID |= (long)in.read() << 32;
-            keyID |= (long)in.read() << 24;
-            keyID |= (long)in.read() << 16;
-            keyID |= (long)in.read() << 8;
-            keyID |= in.read();
-            keyAlgorithm = in.read();
-            hashAlgorithm = in.read();
-        }
-        else if (version == 4)
-        {
-            signatureType = in.read();
-            keyAlgorithm = in.read();
-            hashAlgorithm = in.read();
-            
-            int        hashedLength = (in.read() << 8) | in.read();
-            byte[]    hashed = new byte[hashedLength];
-            
-            in.readFully(hashed);
+            version = in.read();
 
-            //
-            // read the signature sub packet data.
-            //
-            SignatureSubpacket    sub;
-            SignatureSubpacketInputStream    sIn = new SignatureSubpacketInputStream(
-                                                                 new ByteArrayInputStream(hashed));
+            if (version == 3 || version == 2)
+            {
+                int    l = in.read();
 
-            Vector    v = new Vector();
-            while ((sub = sIn.readPacket()) != null)
-            {
-                v.addElement(sub);
+                signatureType = in.read();
+                creationTime = (((long)in.read() << 24) | (in.read() << 16) | (in.read() << 8) | in.read()) * 1000;
+                keyID |= (long)in.read() << 56;
+                keyID |= (long)in.read() << 48;
+                keyID |= (long)in.read() << 40;
+                keyID |= (long)in.read() << 32;
+                keyID |= (long)in.read() << 24;
+                keyID |= (long)in.read() << 16;
+                keyID |= (long)in.read() << 8;
+                keyID |= in.read();
+                keyAlgorithm = in.read();
+                hashAlgorithm = in.read();
             }
-            
-            hashedData = new SignatureSubpacket[v.size()];
-            
-            for (int i = 0; i != hashedData.length; i++)
+            else if (version == 4)
             {
-                SignatureSubpacket    p = (SignatureSubpacket)v.elementAt(i);
-                if (p instanceof IssuerKeyID)
-                {
-                    keyID = ((IssuerKeyID)p).getKeyID();
-                }
-                else if (p instanceof SignatureCreationTime)
-                {
-                    creationTime = ((SignatureCreationTime)p).getTime().getTime();
-                }
-                
-                hashedData[i] = p;
-            }
-            
-            int        unhashedLength = (in.read() << 8) | in.read();
-            byte[]    unhashed = new byte[unhashedLength];
-            
-            in.readFully(unhashed);
-            
-            sIn = new SignatureSubpacketInputStream(
-                                     new ByteArrayInputStream(unhashed));
-                                                    
-            v.removeAllElements();
-            while ((sub = sIn.readPacket()) != null)
-            {
-                v.addElement(sub);
-            }
-            
-            unhashedData = new SignatureSubpacket[v.size()];
-            
-            for (int i = 0; i != unhashedData.length; i++)
-            {
-                SignatureSubpacket    p = (SignatureSubpacket)v.elementAt(i);
-                if (p instanceof IssuerKeyID)
-                {
-                    keyID = ((IssuerKeyID)p).getKeyID();
-                }
-                
-                unhashedData[i] = p;
-            }
-        }
-        else
-        {
-            throw new IOException("unsupported version: " + version);
-        }
-        
-        fingerPrint = new byte[2];
-        in.readFully(fingerPrint);
-        
-        switch (keyAlgorithm)
-        {
-        case RSA_GENERAL:
-        case RSA_SIGN:
-            MPInteger    v = new MPInteger(in);
-                
-            signature = new MPInteger[1];
-            signature[0] = v;
-            break;
-        case DSA:
-            MPInteger    r = new MPInteger(in);
-            MPInteger    s = new MPInteger(in);
-                
-            signature = new MPInteger[2];
-            signature[0] = r;
-            signature[1] = s;
-            break;
-        case ELGAMAL_ENCRYPT: // yep, this really does happen sometimes.
-        case ELGAMAL_GENERAL:
-            MPInteger       p = new MPInteger(in);
-            MPInteger       g = new MPInteger(in);
-            MPInteger       y = new MPInteger(in);
-            
-            signature = new MPInteger[3];
-            signature[0] = p;
-            signature[1] = g;
-            signature[2] = y;
-            break;
-        case ECDSA:
-            MPInteger    ecR = new MPInteger(in);
-            MPInteger    ecS = new MPInteger(in);
+                signatureType = in.read();
+                keyAlgorithm = in.read();
+                hashAlgorithm = in.read();
 
-            signature = new MPInteger[2];
-            signature[0] = ecR;
-            signature[1] = ecS;
-            break;
-        default:
-            if (keyAlgorithm >= PublicKeyAlgorithmTags.EXPERIMENTAL_1 && keyAlgorithm <= PublicKeyAlgorithmTags.EXPERIMENTAL_11)
-            {
-                signature = null;
-                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                int ch;
-                while ((ch = in.read()) >= 0)
+                int        hashedLength = (in.read() << 8) | in.read();
+                byte[]    hashed = new byte[hashedLength];
+
+                in.readFully(hashed);
+
+                //
+                // read the signature sub packet data.
+                //
+                SignatureSubpacket    sub;
+                SignatureSubpacketInputStream    sIn = new SignatureSubpacketInputStream(
+                                                                     new ByteArrayInputStream(hashed));
+
+                Vector    v = new Vector();
+                while ((sub = sIn.readPacket()) != null)
                 {
-                    bOut.write(ch);
+                    v.addElement(sub);
                 }
-                signatureEncoding = bOut.toByteArray();
+
+                hashedData = new SignatureSubpacket[v.size()];
+
+                for (int i = 0; i != hashedData.length; i++)
+                {
+                    SignatureSubpacket    p = (SignatureSubpacket)v.elementAt(i);
+                    if (p instanceof IssuerKeyID)
+                    {
+                        keyID = ((IssuerKeyID)p).getKeyID();
+                    }
+                    else if (p instanceof SignatureCreationTime)
+                    {
+                        creationTime = ((SignatureCreationTime)p).getTime().getTime();
+                    }
+
+                    hashedData[i] = p;
+                }
+
+                int        unhashedLength = (in.read() << 8) | in.read();
+                byte[]    unhashed = new byte[unhashedLength];
+
+                in.readFully(unhashed);
+
+                sIn = new SignatureSubpacketInputStream(
+                                         new ByteArrayInputStream(unhashed));
+
+                v.removeAllElements();
+                while ((sub = sIn.readPacket()) != null)
+                {
+                    v.addElement(sub);
+                }
+
+                unhashedData = new SignatureSubpacket[v.size()];
+
+                for (int i = 0; i != unhashedData.length; i++)
+                {
+                    SignatureSubpacket    p = (SignatureSubpacket)v.elementAt(i);
+                    if (p instanceof IssuerKeyID)
+                    {
+                        keyID = ((IssuerKeyID)p).getKeyID();
+                    }
+
+                    unhashedData[i] = p;
+                }
             }
             else
             {
-                throw new IOException("unknown signature key algorithm: " + keyAlgorithm);
+                throw new IOException("unsupported version: " + version);
             }
+
+            fingerPrint = new byte[2];
+            in.readFully(fingerPrint);
+
+            switch (keyAlgorithm)
+            {
+            case RSA_GENERAL:
+            case RSA_SIGN:
+                MPInteger    v = new MPInteger(in);
+
+                signature = new MPInteger[1];
+                signature[0] = v;
+                break;
+            case DSA:
+                MPInteger    r = new MPInteger(in);
+                MPInteger    s = new MPInteger(in);
+
+                signature = new MPInteger[2];
+                signature[0] = r;
+                signature[1] = s;
+                break;
+            case ELGAMAL_ENCRYPT: // yep, this really does happen sometimes.
+            case ELGAMAL_GENERAL:
+                MPInteger       p = new MPInteger(in);
+                MPInteger       g = new MPInteger(in);
+                MPInteger       y = new MPInteger(in);
+
+                signature = new MPInteger[3];
+                signature[0] = p;
+                signature[1] = g;
+                signature[2] = y;
+                break;
+            case ECDSA:
+                MPInteger    ecR = new MPInteger(in);
+                MPInteger    ecS = new MPInteger(in);
+
+                signature = new MPInteger[2];
+                signature[0] = ecR;
+                signature[1] = ecS;
+                break;
+            default:
+                if (keyAlgorithm >= PublicKeyAlgorithmTags.EXPERIMENTAL_1 && keyAlgorithm <= PublicKeyAlgorithmTags.EXPERIMENTAL_11)
+                {
+                    signature = null;
+                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                    int ch;
+                    while ((ch = in.read()) >= 0)
+                    {
+                        bOut.write(ch);
+                    }
+                    signatureEncoding = bOut.toByteArray();
+                }
+                else
+                {
+                    throw new IOException("unknown signature key algorithm: " + keyAlgorithm);
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            // bad signature, consume rest of body (so next packet can be read) and rethrow
+            while (in.read() >=0);
+
+            throw e;
         }
     }
     

@@ -50,7 +50,18 @@ public abstract class PGPKeyRing
 
             while (pIn.nextPacketTag() == PacketTags.SIGNATURE)
             {
-                SignaturePacket signaturePacket = (SignaturePacket)pIn.readPacket();
+                SignaturePacket signaturePacket;
+                try
+                {
+                    signaturePacket = (SignaturePacket) pIn.readPacket();
+                }
+                catch (IOException e)
+                {
+                    // error reading packet, skip this signature
+                    // skip the trust packet too, if present
+                    readOptionalTrustPacket(pIn);
+                    continue;
+                }
                 TrustPacket trustPacket = readOptionalTrustPacket(pIn);
 
                 sigList.add(new PGPSignature(signaturePacket, trustPacket));
