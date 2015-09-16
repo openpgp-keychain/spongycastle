@@ -127,6 +127,8 @@ class OperatorHelper
             throw new PGPException("Can't use DSA for encryption.");
         case PGPPublicKey.ECDSA:
             throw new PGPException("Can't use ECDSA for encryption.");
+        case PGPPublicKey.EDDSA:
+            throw new PGPException("Can't use EDDSA for encryption.");
         default:
             throw new PGPException("unknown asymmetric algorithm: " + encAlgorithm);
         }
@@ -190,6 +192,9 @@ class OperatorHelper
             break;
         case PublicKeyAlgorithmTags.ECDSA:
             encAlg = "ECDSA";
+            break;
+        case PublicKeyAlgorithmTags.EDDSA:
+            encAlg = "EDDSA";
             break;
         default:
             throw new PGPException("unknown algorithm tag in signature:" + keyAlgorithm);

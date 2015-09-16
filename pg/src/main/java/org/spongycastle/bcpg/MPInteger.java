@@ -26,9 +26,9 @@ public class MPInteger
     public MPInteger(
         BigInteger    value)
     {
-        if (value == null || value.signum() < 0)
+        if (value == null)
         {
-            throw new IllegalArgumentException("value must not be null, or negative");
+            throw new IllegalArgumentException("value must not be null");
         }
 
         this.value = value;
@@ -44,7 +44,10 @@ public class MPInteger
         throws IOException
     {
         int length = value.bitLength();
-        
+
+        if (value.signum() == -1)
+            length++;
+
         out.write(length >> 8);
         out.write(length);
         

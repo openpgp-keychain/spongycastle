@@ -24,6 +24,7 @@ import org.spongycastle.crypto.digests.SHA384Digest;
 import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.params.ParametersWithRandom;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.EDDSASigner;
 import org.spongycastle.crypto.signers.ECNRSigner;
 import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.jcajce.provider.asymmetric.util.DSABase;
@@ -83,6 +84,15 @@ public class SignatureSpi
         }
     }
 
+    static public class edDetDSA
+        extends SignatureSpi
+    {
+        public edDetDSA()
+        {
+            super(new SHA1Digest(), new EDDSASigner(new HMacDSAKCalculator(new SHA1Digest())), new StdDSAEncoder());
+        }
+    }
+
     static public class ecDSAnone
         extends SignatureSpi
     {
@@ -101,12 +111,30 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA224
+        extends SignatureSpi
+    {
+        public edDSA224()
+        {
+            super(new SHA224Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     static public class ecDetDSA224
         extends SignatureSpi
     {
         public ecDetDSA224()
         {
             super(new SHA224Digest(), new ECDSASigner(new HMacDSAKCalculator(new SHA224Digest())), new StdDSAEncoder());
+        }
+    }
+
+    static public class edDetDSA224
+        extends SignatureSpi
+    {
+        public edDetDSA224()
+        {
+            super(new SHA224Digest(), new EDDSASigner(new HMacDSAKCalculator(new SHA224Digest())), new StdDSAEncoder());
         }
     }
 
@@ -119,12 +147,31 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA256
+        extends SignatureSpi
+    {
+        public edDSA256()
+        {
+            super(new NullDigest(), new EDDSASigner(), new StdDSAEncoder());
+            // super(new SHA256Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     static public class ecDetDSA256
         extends SignatureSpi
     {
         public ecDetDSA256()
         {
             super(new SHA256Digest(), new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest())), new StdDSAEncoder());
+        }
+    }
+
+    static public class edDetDSA256
+        extends SignatureSpi
+    {
+        public edDetDSA256()
+        {
+            super(new SHA256Digest(), new EDDSASigner(new HMacDSAKCalculator(new SHA256Digest())), new StdDSAEncoder());
         }
     }
 
@@ -137,12 +184,30 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA384
+        extends SignatureSpi
+    {
+        public edDSA384()
+        {
+            super(new SHA384Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     static public class ecDetDSA384
         extends SignatureSpi
     {
         public ecDetDSA384()
         {
             super(new SHA384Digest(), new ECDSASigner(new HMacDSAKCalculator(new SHA384Digest())), new StdDSAEncoder());
+        }
+    }
+
+    static public class edDetDSA384
+        extends SignatureSpi
+    {
+        public edDetDSA384()
+        {
+            super(new SHA384Digest(), new EDDSASigner(new HMacDSAKCalculator(new SHA384Digest())), new StdDSAEncoder());
         }
     }
 
@@ -155,12 +220,30 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA512
+        extends SignatureSpi
+    {
+        public edDSA512()
+        {
+            super(new SHA512Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     static public class ecDetDSA512
         extends SignatureSpi
     {
         public ecDetDSA512()
         {
             super(new SHA512Digest(), new ECDSASigner(new HMacDSAKCalculator(new SHA512Digest())), new StdDSAEncoder());
+        }
+    }
+
+    static public class edDetDSA512
+        extends SignatureSpi
+    {
+        public edDetDSA512()
+        {
+            super(new SHA512Digest(), new EDDSASigner(new HMacDSAKCalculator(new SHA512Digest())), new StdDSAEncoder());
         }
     }
 
@@ -272,7 +355,46 @@ public class SignatureSpi
         }
     }
 
+    static public class edDSA
+        extends SignatureSpi
+    {
+        public edDSA()
+        {
+            super(new SHA512Digest(), new EDDSASigner(), new StdDSAEncoder());
+        }
+    }
+
     private static class StdDSAEncoder
+        implements DSAEncoder
+    {
+        public byte[] encode(
+            BigInteger r,
+            BigInteger s)
+            throws IOException
+        {
+            ASN1EncodableVector v = new ASN1EncodableVector();
+
+            v.add(new ASN1Integer(r));
+            v.add(new ASN1Integer(s));
+
+            return new DERSequence(v).getEncoded(ASN1Encoding.DER);
+        }
+
+        public BigInteger[] decode(
+            byte[] encoding)
+            throws IOException
+        {
+            ASN1Sequence s = (ASN1Sequence)ASN1Primitive.fromByteArray(encoding);
+            BigInteger[] sig = new BigInteger[2];
+
+            sig[0] = ASN1Integer.getInstance(s.getObjectAt(0)).getValue();
+            sig[1] = ASN1Integer.getInstance(s.getObjectAt(1)).getValue();
+
+            return sig;
+        }
+    }
+
+    private static class StdEDDSAEncoder
         implements DSAEncoder
     {
         public byte[] encode(

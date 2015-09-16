@@ -33,6 +33,7 @@ import org.spongycastle.crypto.engines.TwofishEngine;
 import org.spongycastle.crypto.signers.DSADigestSigner;
 import org.spongycastle.crypto.signers.DSASigner;
 import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.EDDSASigner;
 import org.spongycastle.crypto.signers.RSADigestSigner;
 import org.spongycastle.openpgp.PGPException;
 import org.spongycastle.openpgp.PGPPublicKey;
@@ -79,6 +80,8 @@ class BcImplProvider
             return new DSADigestSigner(new DSASigner(), createDigest(hashAlgorithm));
         case PublicKeyAlgorithmTags.ECDSA:
             return new DSADigestSigner(new ECDSASigner(), createDigest(hashAlgorithm));
+        case PublicKeyAlgorithmTags.EDDSA:
+            return new DSADigestSigner(new EDDSASigner(), createDigest(hashAlgorithm));
         default:
             throw new PGPException("cannot recognise keyAlgorithm: " + keyAlgorithm);
         }
@@ -163,6 +166,8 @@ class BcImplProvider
             throw new PGPException("Can't use DSA for encryption.");
         case PGPPublicKey.ECDSA:
             throw new PGPException("Can't use ECDSA for encryption.");
+        case PGPPublicKey.EDDSA:
+            throw new PGPException("Can't use EDDSA for encryption.");
         case PGPPublicKey.ECDH:
             throw new PGPException("Not implemented.");
         default:
