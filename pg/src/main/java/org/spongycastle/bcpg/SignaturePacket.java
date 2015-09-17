@@ -26,11 +26,13 @@ public class SignaturePacket
     private SignatureSubpacket[]   hashedData;
     private SignatureSubpacket[]   unhashedData;
     private byte[]                 signatureEncoding;
+    boolean                        valid;
     
     SignaturePacket(
         BCPGInputStream    in)
         throws IOException
     {
+        valid = true;
         try
         {
             version = in.read();
@@ -165,26 +167,27 @@ public class SignaturePacket
                 signature[1] = ecS;
                 break;
             default:
-                if (keyAlgorithm >= PublicKeyAlgorithmTags.EXPERIMENTAL_1 && keyAlgorithm <= PublicKeyAlgorithmTags.EXPERIMENTAL_11)
+                // useful if it's an experimental key algorithms
+                signature = null;
+                ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                int ch;
+                while ((ch = in.read()) >= 0)
                 {
-                    signature = null;
-                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-                    int ch;
-                    while ((ch = in.read()) >= 0)
-                    {
-                        bOut.write(ch);
-                    }
-                    signatureEncoding = bOut.toByteArray();
+                    bOut.write(ch);
                 }
-                else
+                signatureEncoding = bOut.toByteArray();
+
+                if (keyAlgorithm < PublicKeyAlgorithmTags.EXPERIMENTAL_1 || keyAlgorithm > PublicKeyAlgorithmTags.EXPERIMENTAL_11)
                 {
-                    throw new IOException("unknown signature key algorithm: " + keyAlgorithm);
+                    // invalid signature type, but don't throw an exception since it still contains
+                    // other useful information
+                    valid = false;
                 }
             }
         }
         catch (IOException e)
         {
-            // bad signature, consume rest of body (so next packet can be read) and rethrow
+            // un-parseable signature, consume rest of body (so next packet can be read) and rethrow
             while (in.read() >=0);
 
             throw e;
@@ -264,6 +267,14 @@ public class SignaturePacket
         {
             setCreationTime();
         }
+    }
+
+    /**
+     * if the signature is known to be invalid
+     */
+    public boolean isValid()
+    {
+        return valid;
     }
     
     /**
